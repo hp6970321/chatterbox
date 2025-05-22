@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Private Chat App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #6C63FF;
+      margin-bottom: 10px;
+    }
+
+    .chat-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .recipient-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .connection-mode {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .mode-option {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 15px;
+      transition: background-color 0.2s;
+    }
+
+    .mode-option:hover {
+      background-color: #e9ecef;
+    }
+
+    .mode-option input[type="radio"] {
+      margin: 0;
+    }
+
+    .connection-status {
+      padding: 8px 12px;
+      background: #e8f5e8;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #2e7d32;
+      text-align: center;
+      border: 1px solid #c8e6c9;
+    }
+
+    #userList {
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      min-width: 120px;
+    }
+
+    /* Call Controls */
+    .call-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-left: 15px;
+    }
+
+    .call-btn {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .voice-call-btn {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .voice-call-btn:hover {
+      background: #45a049;
+      transform: translateY(-1px);
+    }
+
+    .video-call-btn {
+      background: #2196F3;
+      color: white;
+    }
+
+    .video-call-btn:hover {
+      background: #1976D2;
+      transform: translateY(-1px);
+    }
+
+    .call-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Video Call Interface */
+    .video-call-interface {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .video-call-interface.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-container {
+      position: relative;
+      width: 80%;
+      max-width: 800px;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    #remoteVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #localVideo {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 200px;
+      height: 150px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid #fff;
+      background: #333;
+    }
+
+    .call-info {
+      color: white;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .call-actions {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .action-btn {
+      padding: 12px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .mute-btn {
+      background: #555;
+      color: white;
+    }
+
+    .mute-btn.muted {
+      background: #f44336;
+    }
+
+    .camera-btn {
+      background: #555;
+      color: white;
+    }
+
+    .camera-btn.off {
+      background: #f44336;
+    }
+
+    .end-call-btn {
+      background: #f44336;
+      color: white;
+    }
+
+    .action-btn:hover {
+      transform: scale(1.1);
+    }
+
+    /* Voice Call Interface */
+    .voice-call-interface {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      z-index: 1000;
+      min-width: 300px;
+    }
+
+    .voice-call-interface.active {
+      display: block;
+    }
+
+    .voice-call-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #6C63FF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 36px;
+      color: white;
+    }
+
+    .call-status {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .call-duration {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    .voice-call-actions {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    /* Incoming Call */
+    .incoming-call {
+      display: none;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      z-index: 1001;
+      min-width: 280px;
+    }
+
+    .incoming-call.active {
+      display: block;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .incoming-call-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .caller-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #6C63FF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+
+    .incoming-call-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .accept-btn {
+      flex: 1;
+      padding: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .decline-btn {
+      flex: 1;
+      padding: 10px;
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    #messages {
+      list-style: none;
+      padding: 10px;
+      margin: 0;
+      height: 350px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #ffffff;
+      scroll-behavior: smooth;
+    }
+
+    #messages li {
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      max-width: 85%;
+      word-wrap: break-word;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    #messages li.sent-message {
+      background: #D1E8FF;
+      margin-left: auto;
+      text-align: right;
+    }
+
+    #messages li.received-message {
+      background: #F3F4F6;
+      margin-right: auto;
+    }
+
+    #messages li.system-message {
+      background: #FFF3CD;
+      color: #856404;
+      text-align: center;
+      font-style: italic;
+      font-size: 12px;
+      margin: 5px auto;
+      max-width: 95%;
+      border: 1px solid #FFEEBA;
+    }
+
+    #form {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    #input {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    #form button {
+      padding: 12px 20px;
+      font-size: 16px;
+      background: #00BFA6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+
+    #form button:hover {
+      background: #009c87;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .chat-container {
+        padding: 15px;
+        margin: 10px;
+      }
+      
+      .chat-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .call-controls {
+        margin-left: 0;
+        justify-content: center;
+        margin-top: 10px;
+      }
+      
+      .video-container {
+        width: 95%;
+      }
+      
+      #localVideo {
+        width: 120px;
+        height: 90px;
+      }
+    }
+  </style>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+
+<body>
+  <div class="chat-container">
+    <h1>Private Chat</h1>
+
+    <div class="chat-box">
+      <div class="chat-header">
+        <div class="recipient-section">
+          <label for="userList">Send To:</label>
+          <select id="userList"></select>
+          
+          <div class="call-controls">
+            <button class="call-btn voice-call-btn" id="voiceCallBtn" disabled>
+              📞 Voice
+            </button>
+            <button class="call-btn video-call-btn" id="videoCallBtn" disabled>
+              📹 Video
+            </button>
+          </div>
+        </div>
+        
+        <div class="connection-mode">
+          <label>Connection:</label>
+          <label class="mode-option">
+            <input type="radio" name="connectionMode" value="server" checked> 
+            <span>🌐 Server</span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="connectionMode" value="p2p"> 
+            <span>🔗 P2P</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="connection-status" id="connectionStatus">
+        <span>Ready to chat</span>
+      </div>
+
+      <ul id="messages"></ul>
+
+      <form id="form" autocomplete="off">
+        <input id="input" placeholder="Type a message..." />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Video Call Interface -->
+  <div class="video-call-interface" id="videoCallInterface">
+    <div class="call-info">
+      <h2 id="videoCallStatus">Connecting...</h2>
+      <p id="videoCallDuration">00:00</p>
+    </div>
+    <div class="video-container">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <video id="localVideo" autoplay playsinline muted></video>
+    </div>
+    <div class="call-actions">
+      <button class="action-btn mute-btn" id="muteBtn" title="Mute/Unmute">🎤</button>
+      <button class="action-btn camera-btn" id="cameraBtn" title="Camera On/Off">📹</button>
+      <button class="action-btn end-call-btn" id="endCallBtn" title="End Call">📞</button>
+    </div>
+  </div>
+
+  <!-- Voice Call Interface -->
+  <div class="voice-call-interface" id="voiceCallInterface">
+    <div class="voice-call-avatar" id="voiceCallAvatar">👤</div>
+    <div class="call-status" id="voiceCallStatus">Connecting...</div>
+    <div class="call-duration" id="voiceCallDuration">00:00</div>
+    <div class="voice-call-actions">
+      <button class="action-btn mute-btn" id="voiceMuteBtn" title="Mute/Unmute">🎤</button>
+      <button class="action-btn end-call-btn" id="endVoiceCallBtn" title="End Call">📞</button>
+    </div>
+  </div>
+
+  <!-- Incoming Call Notification -->
+  <div class="incoming-call" id="incomingCall">
+    <div class="incoming-call-header">
+      <div class="caller-avatar" id="callerAvatar">👤</div>
+      <div>
+        <div style="font-weight: bold;" id="callerName">Incoming Call</div>
+        <div style="font-size: 12px; color: #666;" id="callType">Voice Call</div>
+      </div>
+    </div>
+    <div class="incoming-call-actions">
+      <button class="accept-btn" id="acceptCallBtn">Accept</button>
+      <button class="decline-btn" id="declineCallBtn">Decline</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const currentUsername = localStorage.getItem('username');
+    
+    if (!currentUsername) {
+      window.location.href = "login.html";
+    }
+    
+    socket.emit('register', currentUsername);
+
+    // DOM Elements
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
+    const userList = document.getElementById('userList');
+    const voiceCallBtn = document.getElementById('voiceCallBtn');
+    const videoCallBtn = document.getElementById('videoCallBtn');
+    
+    // Call interfaces
+    const videoCallInterface = document.getElementById('videoCallInterface');
+    const voiceCallInterface = document.getElementById('voiceCallInterface');
+    const incomingCall = document.getElementById('incomingCall');
+    
+    // Video elements
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    
+    // Call state
+    let localStream = null;
+    let remoteStream = null;
+    let pc = null;
+    let currentCall = null;
+    let callStartTime = null;
+    let callTimer = null;
+    
+    // WebRTC Configuration
+    const rtcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    };
+
+    // Socket event handlers
+    socket.on('register failed', (msg) => {
+      alert(msg);
+    });
+
+    socket.on('register success', (username) => {
+      console.log('Registered successfully:', username);
+    });
+
+    // Send private message
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const toUser = userList.value;
+      const msg = input.value.trim();
+      if (msg && toUser) {
+        socket.emit('private message', {
+          to: toUser,
+          from: currentUsername,
+          message: msg
+        });
+        const item = document.createElement('li');
+        item.className = 'sent-message';
+        item.textContent = `[You → ${toUser}]: ${msg}`;
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+        input.value = '';
+      }
+    });
+
+    // Update user list
+    socket.on('user list', (users) => {
+      userList.innerHTML = '';
+      users.forEach(user => {
+        if (user !== currentUsername) {
+          const option = document.createElement('option');
+          option.value = user;
+          option.textContent = user;
+          userList.appendChild(option);
+        }
+      });
+      
+      // Enable/disable call buttons
+      const hasUsers = users.length > 1;
+      voiceCallBtn.disabled = !hasUsers;
+      videoCallBtn.disabled = !hasUsers;
+    });
+
+    // Display incoming private messages
+    socket.on('private message', ({ from, message }) => {
+      const item = document.createElement('li');
+      item.className = 'received-message';
+      item.textContent = `[${from} → You]: ${message}`;
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    socket.on('chat history', (messagesFromDB) => {
+      messagesFromDB.forEach(({ from, message }) => {
+        const item = document.createElement('li');
+        item.className = 'received-message';
+        item.textContent = `[${from} → You]: ${message}`;
+        messages.appendChild(item);
+      });
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    // WebRTC Call Functions
+    async function initializeCall(isVideo = false) {
+      try {
+        const constraints = {
+          audio: true,
+          video: isVideo
+        };
+        
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        if (isVideo) {
+          localVideo.srcObject = localStream;
+        }
+        
+        pc = new RTCPeerConnection(rtcConfig);
+        
+        // Add local stream tracks
+        localStream.getTracks().forEach(track => {
+          pc.addTrack(track, localStream);
+        });
+        
+        // Handle remote stream
+        pc.ontrack = (event) => {
+          remoteStream = event.streams[0];
+          if (isVideo) {
+            remoteVideo.srcObject = remoteStream;
+          }
+        };
+        
+        // Handle ICE candidates
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit('ice-candidate', {
+              to: userList.value,
+              candidate: event.candidate
+            });
+          }
+        };
+        
+        // Connection state changes
+        pc.onconnectionstatechange = () => {
+          console.log('Connection state:', pc.connectionState);
+          if (pc.connectionState === 'connected') {
+            startCallTimer();
+            updateCallStatus('Connected', isVideo);
+          } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+            endCall();
+          }
+        };
+        
+        return pc;
+      } catch (error) {
+        console.error('Error initializing call:', error);
+        alert('Unable to access camera/microphone');
+        return null;
+      }
+    }
+
+    async function startCall(isVideo = false) {
+      const recipient = userList.value;
+      if (!recipient) {
+        alert('Please select a user to call');
+        return;
+      }
+      
+      currentCall = { type: isVideo ? 'video' : 'voice', recipient, role: 'caller' };
+      
+      if (!await initializeCall(isVideo)) return;
+      
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        
+        socket.emit('webrtc-offer', {
+          to: recipient,
+          offer: offer,
+          callType: isVideo ? 'video' : 'voice'
+        });
+        
+        showCallInterface(isVideo);
+        updateCallStatus(`Calling ${recipient}...`, isVideo);
+        
+      } catch (error) {
+        console.error('Error creating offer:', error);
+        endCall();
+      }
+    }
+
+    async function handleIncomingCall(from, offer, callType) {
+      const isVideo = callType === 'video';
+      
+      // Show incoming call notification
+      document.getElementById('callerName').textContent = from;
+      document.getElementById('callType').textContent = isVideo ? 'Video Call' : 'Voice Call';
+      document.getElementById('callerAvatar').textContent = from[0].toUpperCase();
+      incomingCall.classList.add('active');
+      
+      // Store call info
+      window.incomingCallData = { from, offer, callType };
+    }
+
+    async function acceptCall() {
+      const { from, offer, callType } = window.incomingCallData;
+      const isVideo = callType === 'video';
+      
+      currentCall = { type: callType, recipient: from, role: 'receiver' };
+      incomingCall.classList.remove('active');
+      
+      if (!await initializeCall(isVideo)) return;
+      
+      try {
+        await pc.setRemoteDescription(offer);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        
+        socket.emit('webrtc-answer', {
+          to: from,
+          answer: answer
+        });
+        
+        showCallInterface(isVideo);
+        updateCallStatus(`Connected with ${from}`, isVideo);
+        
+      } catch (error) {
+        console.error('Error accepting call:', error);
+        endCall();
+      }
+    }
+
+    function declineCall() {
+      incomingCall.classList.remove('active');
+      socket.emit('call-declined', { to: window.incomingCallData.from });
+    }
+
+    function showCallInterface(isVideo) {
+      if (isVideo) {
+        videoCallInterface.classList.add('active');
+      } else {
+        voiceCallInterface.classList.add('active');
+        document.getElementById('voiceCallAvatar').textContent = 
+          currentCall.recipient[0].toUpperCase();
+      }
+    }
+
+    function hideCallInterface() {
+      videoCallInterface.classList.remove('active');
+      voiceCallInterface.classList.remove('active');
+    }
+
+    function updateCallStatus(status, isVideo) {
+      if (isVideo) {
+        document.getElementById('videoCallStatus').textContent = status;
+      } else {
+        document.getElementById('voiceCallStatus').textContent = status;
+      }
+    }
+
+    function startCallTimer() {
+      callStartTime = Date.now();
+      callTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        const seconds = (elapsed % 60).toString().padStart(2, '0');
+        const timeStr = `${minutes}:${seconds}`;
+        
+        document.getElementById('videoCallDuration').textContent = timeStr;
+        document.getElementById('voiceCallDuration').textContent = timeStr;
+      }, 1000);
+    }
+
+    function endCall() {
+      // Clean up WebRTC
+      if (pc) {
+        pc.close();
+        pc = null;
+      }
+      
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      
+      if (remoteStream) {
+        remoteStream.getTracks().forEach(track => track.stop());
+        remoteStream = null;
+      }
+      
+      // Clear videos
+      localVideo.srcObject = null;
+      remoteVideo.srcObject = null;
+      
+      // Hide interfaces
+      hideCallInterface();
+      incomingCall.classList.remove('active');
+      
+      // Clear timers
+      if (callTimer) {
+        clearInterval(callTimer);
+        callTimer = null;
+      }
+      
+      // Notify other user if we initiated the end
+      if (currentCall) {
+        socket.emit('call-ended', { to: currentCall.recipient });
+      }
+      
+      currentCall = null;
+      callStartTime = null;
+    }
+
+    function toggleMute(isVideo = false) {
+      if (!localStream) return;
+      
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        const muteBtn = isVideo ? document.getElementById('muteBtn') : document.getElementById('voiceMuteBtn');
+        muteBtn.classList.toggle('muted', !audioTrack.enabled);
+        muteBtn.textContent = audioTrack.enabled ? '🎤' : '🔇';
+      }
+    }
+
+    function toggleCamera() {
+      if (!localStream) return;
+      
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        const cameraBtn = document.getElementById('cameraBtn');
+        cameraBtn.classList.toggle('off', !videoTrack.enabled);
+        cameraBtn.textContent = videoTrack.enabled ? '📹' : '📷';
+      }
+    }
+
+    // Event Listeners
+    voiceCallBtn.addEventListener('click', () => startCall(false));
+    videoCallBtn.addEventListener('click', () => startCall(true));
+    
+    document.getElementById('acceptCallBtn').addEventListener('click', acceptCall);
+    document.getElementById('declineCallBtn').addEventListener('click', declineCall);
+    
+    document.getElementById('endCallBtn').addEventListener('click', endCall);
+    document.getElementById('endVoiceCallBtn').addEventListener('click', endCall);
+    
+    document.getElementById('muteBtn').addEventListener('click', () => toggleMute(true));
+    document.getElementById('voiceMuteBtn').addEventListener('click', () => toggleMute(false));
+    document.getElementById('cameraBtn').addEventListener('click', toggleCamera);
+
+    // Socket event handlers for WebRTC
+    socket.on('webrtc-offer', ({ from, offer, callType }) => {
+      handleIncomingCall(from, offer, callType);
+    });
+
+    socket.on('webrtc-answer', async ({ from, answer }) => {
+      if (pc) {
+        try {
+          await pc.setRemoteDescription(answer);
+          updateCallStatus(`Connected with ${from}`, currentCall.type === 'video');
+        } catch (error) {
+          console.error('Error setting remote description:', error);
+        }
+      }
+    });
+
+    socket.on('ice-candidate', async ({ from, candidate }) => {
+      if (pc) {
+        try {
+          await pc.addIceCandidate(candidate);
+        } catch (error) {
+          console.error('Error adding ICE candidate:', error);
+        }
+      }
+    });
+
+    socket.on('call-declined', () => {
+      alert('Call was declined');
+      endCall();
+    });
+
+    socket.on('call-ended', () => {
+      endCall();
+    });
+
+    socket.on('webrtc-error', ({ message }) => {
+      alert('Call error: ' + message);
+      endCall();
+    });
+  </script>
+</body>
+</html>

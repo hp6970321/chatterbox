@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Auth | Private Chat</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .auth-toggle { text-align: center; margin-top: 10px; cursor: pointer; color: #6C63FF; font-weight: 600; }
+    .auth-toggle:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h1 id="auth-title">Login</h1>
+
+    <div class="user-info">
+      <input id="username" placeholder="Enter username" />
+      <button onclick="auth()">Continue</button>
+    </div>
+
+    <p class="auth-toggle" onclick="toggleMode()">Don't have an account? Sign Up</p>
+  </div>
+
+  <script>
+    let mode = "login"; // or "signup"
+
+    function toggleMode() {
+      const title = document.getElementById("auth-title");
+      const toggleText = document.querySelector(".auth-toggle");
+      if (mode === "login") {
+        mode = "signup";
+        title.innerText = "Sign Up";
+        toggleText.innerText = "Already have an account? Login";
+      } else {
+        mode = "login";
+        title.innerText = "Login";
+        toggleText.innerText = "Don't have an account? Sign Up";
+      }
+    }
+
+    // For demo: simulate registered usernames
+    let registeredUsers = JSON.parse(localStorage.getItem("users")) || [];
+
+    function auth() {
+      const username = document.getElementById("username").value.trim();
+      if (!username) return alert("Please enter a username");
+
+      if (mode === "signup") {
+        if (registeredUsers.includes(username)) {
+          return alert("Username already taken");
+        }
+        registeredUsers.push(username);
+        localStorage.setItem("users", JSON.stringify(registeredUsers));
+        alert("Signup successful! You can now login.");
+        toggleMode(); // switch to login mode
+      } else {
+        if (!registeredUsers.includes(username)) {
+          return alert("Username not found. Please sign up.");
+        }
+        localStorage.setItem("username", username);
+        window.location.href = "chat.html";
+      }
+    }
+  </script>
+</body>
+</html>
